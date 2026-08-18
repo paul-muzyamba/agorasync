@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: agora
+      POSTGRES_PASSWORD: agora_secret
+      POSTGRES_DB: agorasync
+    ports:
+      - "5433:5432"
+    volumes:
+      - ../../pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../../redis_data:/data
+
+volumes:
+  pg_data:
+  redis_data:

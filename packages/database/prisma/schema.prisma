@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionStatus {
+  PENDING
+  RESERVED
+  SUCCESS
+  FAILED
+}
+
+model Account {
+  id              String   @id @default(uuid())
+  merchantId      String   @unique
+  balance         Decimal  @db.Decimal(15, 2) @default(0)
+  reservedBalance Decimal  @db.Decimal(15, 2) @default(0)
+  transactions    Transaction[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  idempotencyKey  String            @unique
+  accountId       String
+  account         Account           @relation(fields: [accountId], references: [id])
+  amount          Decimal           @db.Decimal(15, 2)
+  status          TransactionStatus @default(PENDING)
+  momoReference   String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([idempotencyKey])
+}
+
+model IdempotencyRecord {
+  key        String   @id
+  response   String   @db.Text
+  expiresAt  DateTime @db.Timestamp(6)
+}
