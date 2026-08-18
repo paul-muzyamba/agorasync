@@ -18,16 +18,32 @@ Imagine a field agent in rural Kenya collecting payments via mobile money (like 
 
 ---
 
-##  Who is this designed for?
+## 👥 Who is this designed for? (And Why It Matters)
 
-### **Tier 1: Field Agents (End Users)**
-- **Use Case**: Agricultural buyers, mobile money agents, distribution drivers
-- **Environment**: Low-end Android devices, intermittent 2G/3G, high latency
-- **Needs**: Offline-first functionality, battery efficiency, silent retry mechanisms
+AgoraSync is not built for a standard e-commerce checkout in a well-connected city. It is engineered for the harsh realities of emerging market infrastructure. Every architectural decision in this system is dictated by the physical and technological constraints of our three core personas:
 
-### **Tier 2: Operations & Reconcilers (Back Office)**
-- **Use Case**: Monitoring transactions, resolving edge cases, manual interventions
-- **Needs**: Complete audit trails, observability dashboards, Dead Letter Queue (DLQ) management
+### **Tier 1: The Field Agent (The Edge Node)**
+* **The Persona:** Agricultural procurement officers, mobile money sub-agents, and FMCG distribution drivers operating in rural or peri-urban areas.
+* **The Real-World Pain:** These agents act as walking point-of-sale terminals. If a payment app spins or throws a network error while they are collecting cash from a farmer, the agent loses the sale, and worse, loses the trust of the community. If the network drops *mid-transaction*, they are often accused of "stealing" the money. 
+* **How AgoraSync Solves It (Technical Mapping):** 
+  * **Offline-First & Optimistic UI:** The mobile client must never block the user. Transactions are saved to a local SQLite queue instantly. 
+  * **Silent Retries:** The app uses a background sync engine to flush the queue when connectivity returns, completely abstracting the network instability from the user.
+  * **Low Bandwidth Optimization:** Payloads are kept strictly minimal to function on intermittent 2G/EDGE networks.
+
+### **Tier 2: The Back-Office Reconciler (The Source of Truth)**
+* **The Persona:** Operations staff and finance clerks at the headquarters managing the ledger.
+* **The Real-World Pain:** Mobile Money APIs (like M-Pesa or MTN MoMo) are notorious for dropping webhooks. A user's phone gets debited, but the merchant's system never receives the success callback. The reconciler is then forced to manually match CSV exports from the telecom provider against internal database logs to figure out who to credit. It is a nightmare of lost revenue and angry customers.
+* **How AgoraSync Solves It (Technical Mapping):**
+  * **Strict Idempotency:** By enforcing UUIDv7 keys, we guarantee that even if the telecom provider sends the same webhook 10 times, the ledger is only updated once.
+  * **SAGA Compensation & DLQ:** If a transaction gets stuck in limbo (e.g., funds reserved but MoMo API times out), the system automatically compensates (releases funds) or routes the failure to a Dead Letter Queue. The reconciler gets a clean dashboard of *exactly* what failed and why, eliminating manual CSV matching.
+  * **Audit Trails:** Every state change (PENDING -> RESERVED -> SUCCESS/FAILED) is immutably logged for regulatory compliance.
+
+### **Tier 3: The Enterprise Integrator (The API Consumer)**
+* **The Persona:** Fintech startups, logistics companies, or large agri-tech platforms that need to disburse micro-payments to thousands of users but don't want to build the payment infrastructure themselves.
+* **The Real-World Pain:** Building a resilient, fault-tolerant payment gateway that handles telecom outages, rate limits, and eventual consistency takes a team of senior engineers months to build.
+* **How AgoraSync Solves It (Technical Mapping):**
+  * **Clean API Contract:** We expose a simple, well-documented REST API. The integrator just sends a payload with an idempotency key.
+  * **Abstracted Complexity:** We hide the complexity of Circuit Breakers, Exponential
 
 ---
 
