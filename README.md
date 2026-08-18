@@ -334,31 +334,6 @@ agorasync/
 
 ---
 
-## 🎯 Interview Talking Points
-
-When discussing this project in interviews, emphasize:
-
-### **The Problem**
-*"I built AgoraSync to solve a real problem: field agents in emerging markets need to collect payments in areas with unreliable networks. Standard payment apps fail when the network drops. AgoraSync doesn't."*
-
-### **The Architecture**
-*"I implemented three critical patterns:*
-1. *Idempotency using Redis distributed locks to prevent the 'Thundering Herd' problem*
-2. *SAGA pattern with automatic compensation to ensure funds are never permanently locked*
-3. *Circuit Breaker with exponential backoff to protect the system from cascading failures*"
-
-### **The Proof**
-*"I can intentionally break the external MoMo API, and the system will:*
-- *Retry with exponential backoff*
-- *Trip the circuit breaker after 3 failures*
-- *Automatically release reserved funds*
-- *Mark the transaction as FAILED*
-- *Keep the user's balance intact*
-
-*This is exactly how Stripe and Square handle payment failures."*
-
----
-
 ## 📝 Development Commands Quick Reference
 
 ```bash
